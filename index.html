@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>QuickCollect</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-glow: rgba(99,102,241,0.15);
+            --accent: #06b6d4;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --surface: rgba(30,41,59,0.8);
+            --header-bg: rgba(15,23,42,0.85);
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(148,163,184,0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.3);
+            --glow: 0 0 30px rgba(99,102,241,0.2);
+            --toast-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            --modal-bg: rgba(0,0,0,0.7);
+            --gradient-bg1: rgba(99,102,241,0.15);
+            --gradient-bg2: rgba(6,182,212,0.1);
+            --focus-bg: rgba(51,65,85,0.8);
+        }
+
+        [data-theme="light"] {
+            --bg: #f0f4ff;
+            --bg-card: rgba(255,255,255,0.75);
+            --bg-input: rgba(255,255,255,0.9);
+            --surface: rgba(255,255,255,0.85);
+            --header-bg: rgba(255,255,255,0.7);
+            --text: #1e293b;
+            --text-dim: #475569;
+            --text-muted: #94a3b8;
+            --border: rgba(99,102,241,0.08);
+            --shadow: 0 4px 24px rgba(99,102,241,0.06);
+            --glow: 0 0 40px rgba(99,102,241,0.1);
+            --toast-shadow: 0 12px 40px rgba(99,102,241,0.1);
+            --modal-bg: rgba(15,23,42,0.3);
+            --gradient-bg1: rgba(99,102,241,0.2);
+            --gradient-bg2: rgba(236,72,153,0.12);
+            --focus-bg: #ffffff;
+        }
+
+        [data-theme="light"] body {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 30%, #fdf2f8 60%, #ede9fe 100%);
+            background-attachment: fixed;
+        }
+
+        [data-theme="light"] body::before {
+            background:
+                radial-gradient(ellipse 600px 600px at 15% 20%, rgba(99,102,241,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 500px at 85% 80%, rgba(236,72,153,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 400px at 50% 50%, rgba(6,182,212,0.06) 0%, transparent 70%);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 0.4s;
+        }
+
+        [data-theme="dark"] body::before,
+        :root:not([data-theme]) body::before {
+            background:
+                radial-gradient(ellipse 700px 700px at 10% 10%, rgba(99,102,241,0.18) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 600px at 90% 90%, rgba(6,182,212,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 500px at 50% 40%, rgba(139,92,246,0.08) 0%, transparent 70%);
+        }
+
+        [data-theme="dark"] body,
+        :root:not([data-theme]) body {
+            background: linear-gradient(160deg, #0f172a 0%, #1a1145 40%, #0f172a 70%, #0c1a2e 100%);
+            background-attachment: fixed;
+        }
+
+        [data-theme="dark"] .card {
+            background: rgba(30,41,59,0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(148,163,184,0.08);
+        }
+
+        [data-theme="dark"] .card-glow {
+            border-color: rgba(99,102,241,0.25);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 40px rgba(99,102,241,0.15), inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        [data-theme="dark"] .entry-card {
+            background: rgba(51,65,85,0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(148,163,184,0.06);
+        }
+
+        [data-theme="dark"] .header {
+            background: rgba(15,23,42,0.6);
+            border-bottom-color: rgba(99,102,241,0.1);
+        }
+
+        [data-theme="dark"] .search-box input {
+            background: rgba(30,41,59,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        [data-theme="dark"] .view-toggle {
+            background: rgba(51,65,85,0.4);
+            border: 1px solid rgba(148,163,184,0.06);
+        }
+
+        [data-theme="dark"] .form-group input {
+            background: rgba(51,65,85,0.5);
+            border-color: rgba(148,163,184,0.1);
+        }
+
+        [data-theme="dark"] .pagination button {
+            background: rgba(51,65,85,0.4);
+            border-color: rgba(148,163,184,0.08);
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background: rgba(51,65,85,0.5);
+            border-color: rgba(99,102,241,0.2);
+        }
+
+        [data-theme="dark"] .modal {
+            background: rgba(30,41,59,0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-color: rgba(99,102,241,0.15);
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 20px 20px 16px;
+            background: var(--header-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .badge {
+            background: var(--primary-glow);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--primary-light);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 16px 120px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .card-glow {
+            box-shadow: var(--shadow), var(--glow);
+            border-color: rgba(99,102,241,0.2);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--primary-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 16px; }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 18px;
+            font-size: 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+            background: var(--bg-input);
+            color: var(--text);
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .form-group input::placeholder { color: var(--text-muted); }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-glow), 0 0 20px rgba(99,102,241,0.1);
+            background: var(--focus-bg);
+        }
+
+        .form-group input.invalid {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
+        }
+
+        .form-group .hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; }
+        .form-group .error { font-size: 0.7rem; color: var(--danger); margin-top: 6px; display: none; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:active { transform: scale(0.95); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: #fff;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+            font-size: 1rem;
+            padding: 16px;
+        }
+
+        .btn-primary:hover { box-shadow: 0 6px 30px rgba(99,102,241,0.5); transform: translateY(-1px); }
+
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 12px;
+            font-size: 1.1rem;
+        }
+
+        .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+        .btn-purple { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+        .btn-danger-outline { background: rgba(239,68,68,0.1); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+        .btn-sm { padding: 8px 14px; font-size: 0.78rem; border-radius: 8px; }
+        .btn-edit { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .btn-delete { background: rgba(239,68,68,0.1); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+        .btn-success:active, .btn-purple:active, .btn-danger-outline:active {
+            transform: scale(0.95);
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .actions-bar .btn { flex: 1; padding: 14px 10px; }
+
+        /* Search */
+        .search-box {
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 18px 14px 46px;
+            font-size: 0.95rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all 0.3s;
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .search-box input::placeholder { color: var(--text-muted); }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+        }
+
+        .view-toggle button {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.25s;
+            color: var(--text-muted);
+        }
+
+        .view-toggle button.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(99,102,241,0.3);
+        }
+
+        /* Table */
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+
+        thead th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        thead th:hover { color: var(--primary-light); }
+        thead th .sort-icon { margin-left: 4px; font-size: 0.65rem; color: var(--primary-light); }
+
+        tbody td {
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover { background: rgba(99,102,241,0.04); }
+        tbody tr:active { background: rgba(99,102,241,0.08); }
+
+        .actions-cell { white-space: nowrap; display: flex; gap: 6px; }
+
+        /* Card View */
+        .card-view { display: none; }
+        .card-view.active { display: flex; flex-direction: column; gap: 12px; }
+        .table-view { display: block; }
+        .table-view.hidden { display: none; }
+
+        .entry-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            position: relative;
+            animation: fadeScale 0.3s cubic-bezier(0.16,1,0.3,1);
+            transition: border-color 0.2s;
+        }
+
+        .entry-card:active { border-color: rgba(99,102,241,0.3); }
+
+        .entry-card .serial {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            min-width: 28px;
+            height: 28px;
+            padding: 0 8px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .entry-card .field { margin-bottom: 10px; }
+        .entry-card .field-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 2px; }
+        .entry-card .field-value { font-size: 0.95rem; font-weight: 500; color: var(--text); }
+        .entry-card .field-value.name { font-size: 1.05rem; font-weight: 600; }
+
+        .entry-card .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-state .empty-icon { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state p { font-size: 0.9rem; color: var(--text-muted); }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            min-width: 38px;
+            height: 38px;
+            padding: 0 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-input);
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dim);
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(99,102,241,0.3);
+        }
+
+        .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 14px 22px;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            box-shadow: var(--toast-shadow);
+            animation: toastIn 0.4s cubic-bezier(0.16,1,0.3,1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+            max-width: 90vw;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast.success { border-color: rgba(16,185,129,0.4); }
+        .toast.success::before { content: ''; width: 4px; height: 100%; position: absolute; left: 0; top: 0; background: var(--success); border-radius: 14px 0 0 14px; }
+        .toast.error { border-color: rgba(239,68,68,0.4); }
+        .toast.error::before { content: ''; width: 4px; height: 100%; position: absolute; left: 0; top: 0; background: var(--danger); border-radius: 14px 0 0 14px; }
+        .toast.warning { border-color: rgba(245,158,11,0.4); }
+        .toast.undo { border-color: rgba(148,163,184,0.3); }
+        .toast { position: relative; overflow: hidden; padding-left: 26px; }
+
+        .toast .undo-btn {
+            background: var(--primary);
+            border: none;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(20px) scale(0.95); }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--modal-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeScale 0.3s cubic-bezier(0.16,1,0.3,1);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+        }
+
+        .modal h3 { margin-bottom: 12px; font-size: 1.2rem; color: var(--text); }
+        .modal p { color: var(--text-muted); margin-bottom: 8px; font-size: 0.88rem; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+        .modal-actions .btn { flex: 1; }
+        .btn-cancel { background: var(--bg-input); color: var(--text-dim); border: 1px solid var(--border); }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        /* Install banner */
+        .install-banner {
+            display: none;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            padding: 14px 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+            animation: slideUp 0.4s ease;
+        }
+
+        .install-banner.show { display: block; }
+
+        /* Print */
+        .print-header { display: none; }
+
+        @media print {
+            body { padding: 0; background: #fff; color: #000; }
+            body::before { display: none; }
+            .header, .actions-bar, .search-box, .view-toggle,
+            .actions-cell, .pagination, .card-view,
+            .modal-overlay, .toast-container, .install-banner { display: none !important; }
+            .container { padding: 0; max-width: 100%; }
+            .card { box-shadow: none; border: none; border-radius: 0; padding: 0; background: #fff; }
+            .card:first-of-type { display: none !important; }
+            .table-view { display: block !important; }
+            .print-header { display: block; text-align: center; margin-bottom: 20px; padding: 15px 0; border-bottom: 2px solid #333; }
+            .print-header h2 { font-size: 16pt; margin-bottom: 4px; color: #000; }
+            .print-header p { font-size: 10pt; color: #555; }
+            table { font-size: 10pt; }
+            thead th { background: #333 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            tbody td { color: #000; border-color: #ddd; }
+            @page { size: A4 landscape; margin: 12mm; }
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .theme-toggle:active { transform: scale(0.9); }
+
+        /* Smooth transitions for theme */
+        body, .card, .header, .form-group input, .search-box input,
+        .view-toggle, .view-toggle button, .entry-card, .pagination button,
+        .modal, .btn-cancel, .toast { transition: background 0.4s, border-color 0.4s, color 0.3s, box-shadow 0.4s; }
+
+        [data-theme="light"] .header h1 {
+            background: linear-gradient(135deg, #4f46e5, #0891b2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        [data-theme="light"] .btn-primary {
+            box-shadow: 0 4px 20px rgba(99,102,241,0.25);
+        }
+
+        [data-theme="light"] .view-toggle button.active {
+            box-shadow: 0 2px 10px rgba(99,102,241,0.2);
+        }
+
+        [data-theme="light"] .modal {
+            box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+        }
+
+        [data-theme="light"] .card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 4px 24px rgba(99,102,241,0.06), 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        [data-theme="light"] .card-glow {
+            border-color: rgba(99,102,241,0.2);
+            box-shadow: 0 8px 32px rgba(99,102,241,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+
+        [data-theme="light"] .entry-card {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        [data-theme="light"] .badge {
+            background: rgba(99,102,241,0.1);
+            border-color: rgba(99,102,241,0.25);
+            color: #4f46e5;
+        }
+
+        [data-theme="light"] .theme-toggle {
+            background: rgba(255,255,255,0.6);
+            border-color: rgba(99,102,241,0.15);
+        }
+
+        [data-theme="light"] tbody tr:hover {
+            background: rgba(99,102,241,0.04);
+        }
+
+        [data-theme="light"] .search-box input {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        [data-theme="light"] .view-toggle {
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(99,102,241,0.08);
+        }
+
+        [data-theme="light"] .form-group input {
+            background: rgba(255,255,255,0.9);
+            border-color: rgba(99,102,241,0.12);
+        }
+
+        [data-theme="light"] .btn-success {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.25);
+        }
+
+        [data-theme="light"] .btn-purple {
+            background: rgba(139,92,246,0.1);
+            border-color: rgba(139,92,246,0.25);
+        }
+
+        [data-theme="light"] .btn-danger-outline {
+            background: rgba(239,68,68,0.06);
+            border-color: rgba(239,68,68,0.2);
+        }
+
+        [data-theme="light"] .pagination button {
+            background: rgba(255,255,255,0.7);
+            border-color: rgba(99,102,241,0.1);
+        }
+
+        /* Responsive */
+        @media (min-width: 640px) {
+            .container { padding: 24px 24px 100px; }
+            .card { padding: 28px; }
+            .header { padding: 24px 24px 20px; }
+            .entry-card { padding: 22px; }
+        }
+    </style>
+    <script>
+        var manifest = {
+            name: "QuickCollect", short_name: "QuickCollect",
+            description: "Mobile-friendly data collection app",
+            start_url: "./index.html", display: "standalone",
+            background_color: "#0f172a", theme_color: "#6366f1",
+            orientation: "portrait",
+            icons: [{
+                src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236366f1'/><text x='50' y='66' font-size='42' text-anchor='middle' fill='white' font-family='system-ui' font-weight='700'>DE</text></svg>",
+                sizes: "512x512", type: "image/svg+xml"
+            }]
+        };
+        var b = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        var l = document.createElement('link');
+        l.rel = 'manifest'; l.href = URL.createObjectURL(b);
+        document.head.appendChild(l);
+    </script>
+</head>
+<body>
+    <div class="install-banner" id="installBanner" onclick="installApp()">
+        &#9889; Install app for offline use
+    </div>
+
+    <div class="header">
+        <div class="header-inner">
+            <h1>&#9998; QuickCollect</h1>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div class="badge" id="entryBadge"><span id="entryCount">0</span> entries</div>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <span id="themeIcon">&#9728;&#65039;</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card card-glow" id="formCard">
+            <div class="card-title">
+                <div class="icon">&#128221;</div>
+                New Entry
+            </div>
+            <form id="entryForm">
+                <div class="form-group">
+                    <label>Aadhar Card Number</label>
+                    <input type="tel" id="aadhar" inputmode="numeric" maxlength="12" placeholder="0000 0000 0000" autocomplete="off">
+                    <div class="hint">12 digit unique identification number</div>
+                    <div class="error" id="aadharError">Must be exactly 12 digits</div>
+                    <div class="error" id="aadharDupError">This Aadhar number already exists</div>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="name" placeholder="Enter full name" autocomplete="off">
+                    <div class="error" id="nameError">Name is required</div>
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" id="mobile" inputmode="numeric" maxlength="10" placeholder="00000 00000" autocomplete="off">
+                    <div class="hint">10 digit mobile number</div>
+                    <div class="error" id="mobileError">Must be exactly 10 digits</div>
+                    <div class="error" id="mobileDupError">This mobile number already exists</div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Entry</button>
+            </form>
+        </div>
+
+        <div class="actions-bar">
+            <button class="btn btn-success" onclick="exportPDF()">&#128196; PDF</button>
+            <button class="btn btn-purple" onclick="window.print()">&#128424; Print</button>
+            <button class="btn btn-danger-outline" onclick="confirmClearAll()">&#128465; Clear</button>
+        </div>
+
+        <div class="search-box">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Search by name, Aadhar or mobile..." oninput="resetPageAndRender()">
+        </div>
+
+        <div class="view-toggle">
+            <button id="tableViewBtn" class="active" onclick="setView('table')">&#9776; Table</button>
+            <button id="cardViewBtn" onclick="setView('card')">&#9638; Cards</button>
+        </div>
+
+        <div class="card">
+            <div class="print-header" id="printHeader" style="display:none;">
+                <h2 id="printOrgName"></h2>
+                <p id="printTemplate"></p>
+                <p>Generated: <span class="print-date"></span></p>
+            </div>
+
+            <div class="table-view" id="tableView">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortBy('serial')"># <span class="sort-icon" id="sort-serial"></span></th>
+                                <th onclick="sortBy('aadhar')">Aadhar <span class="sort-icon" id="sort-aadhar"></span></th>
+                                <th onclick="sortBy('name')">Name <span class="sort-icon" id="sort-name"></span></th>
+                                <th onclick="sortBy('mobile')">Mobile <span class="sort-icon" id="sort-mobile"></span></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+
+            <div class="card-view" id="cardView"></div>
+
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">&#128203;</div>
+                <p>No entries yet</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <h3>&#9888;&#65039; Clear All Data?</h3>
+            <p>This will permanently delete all <strong><span id="clearCount">0</span></strong> entries. You cannot undo this action.</p>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('confirmModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="clearAll()">Delete All</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3>Edit Entry</h3>
+            <form id="editForm">
+                <input type="hidden" id="editModalIndex">
+                <div class="form-group">
+                    <label>Aadhar Card Number</label>
+                    <input type="tel" id="editAadhar" inputmode="numeric" maxlength="12" placeholder="12-digit number">
+                    <div class="error" id="editAadharError">Must be exactly 12 digits</div>
+                    <div class="error" id="editAadharDupError">This Aadhar number already exists</div>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="editName" placeholder="Full name">
+                    <div class="error" id="editNameError">Name is required</div>
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" id="editMobile" inputmode="numeric" maxlength="10" placeholder="10-digit number">
+                    <div class="error" id="editMobileError">Must be exactly 10 digits</div>
+                    <div class="error" id="editMobileDupError">This mobile number already exists</div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Theme
+        function initTheme() {
+            var saved = localStorage.getItem('theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            var theme = document.documentElement.getAttribute('data-theme');
+            document.getElementById('themeIcon').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        initTheme();
+
+        var STORAGE_KEY = 'dataEntryApp';
+        var PAGE_SIZE = 20;
+        var currentPage = 1;
+        var currentView = 'table';
+        var sortField = null;
+        var sortAsc = true;
+        var deletedEntry = null;
+        var deletedIndex = null;
+        var undoTimeout = null;
+        var deferredPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBanner').classList.add('show');
+        });
+
+        function installApp() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function() {
+                deferredPrompt = null;
+                document.getElementById('installBanner').classList.remove('show');
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(function() {});
+        }
+
+        function getData() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+            catch(e) { return []; }
+        }
+
+        function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+        function validateAadhar(v) { return /^\d{12}$/.test(v); }
+        function validateMobile(v) { return /^\d{10}$/.test(v); }
+        function validateName(v) { return v.trim().length > 0; }
+
+        function isDuplicate(field, value, excludeIndex) {
+            return getData().some(function(entry, i) { return i !== excludeIndex && entry[field] === value; });
+        }
+
+        function showError(el, errEl) { el.classList.add('invalid'); errEl.style.display = 'block'; }
+        function clearError(el, errEl) { el.classList.remove('invalid'); errEl.style.display = 'none'; }
+
+        function showToast(message, type, undoCallback) {
+            var container = document.getElementById('toastContainer');
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = message + (undoCallback ? '<button class="undo-btn">UNDO</button>' : '');
+            if (undoCallback) {
+                toast.querySelector('.undo-btn').addEventListener('click', function() {
+                    undoCallback();
+                    toast.remove();
+                });
+            }
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.animation = 'toastOut 0.3s ease forwards';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, undoCallback ? 5000 : 2500);
+        }
+
+        function setView(view) {
+            currentView = view;
+            document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+            document.getElementById('cardViewBtn').classList.toggle('active', view === 'card');
+            document.getElementById('tableView').classList.toggle('hidden', view !== 'table');
+            document.getElementById('cardView').classList.toggle('active', view === 'card');
+            renderTable();
+        }
+
+        function sortBy(field) {
+            if (sortField === field) { sortAsc = !sortAsc; }
+            else { sortField = field; sortAsc = true; }
+            renderTable();
+        }
+
+        function resetPageAndRender() { currentPage = 1; renderTable(); }
+
+        function renderTable() {
+            var data = getData();
+            var search = document.getElementById('searchInput').value.toLowerCase().trim();
+            var emptyState = document.getElementById('emptyState');
+
+            document.getElementById('entryCount').textContent = data.length;
+
+            if (data.length === 0) {
+                document.getElementById('tableBody').innerHTML = '';
+                document.getElementById('cardView').innerHTML = '';
+                document.getElementById('pagination').innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            emptyState.style.display = 'none';
+
+            var indexed = data.map(function(entry, i) { return { aadhar: entry.aadhar, name: entry.name, mobile: entry.mobile, _idx: i }; });
+
+            if (search) {
+                indexed = indexed.filter(function(entry) {
+                    return entry.aadhar.includes(search) ||
+                        entry.name.toLowerCase().includes(search) ||
+                        entry.mobile.includes(search) ||
+                        String(entry._idx + 1) === search;
+                });
+            }
+
+            if (sortField && sortField !== 'serial') {
+                indexed.sort(function(a, b) {
+                    var cmp = (a[sortField] || '').localeCompare(b[sortField] || '', undefined, { numeric: true });
+                    return sortAsc ? cmp : -cmp;
+                });
+            }
+
+            ['serial', 'aadhar', 'name', 'mobile'].forEach(function(f) {
+                var el = document.getElementById('sort-' + f);
+                el.textContent = f === sortField ? (sortAsc ? '▲' : '▼') : '';
+            });
+
+            var totalPages = Math.ceil(indexed.length / PAGE_SIZE);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+            var start = (currentPage - 1) * PAGE_SIZE;
+            var pageData = indexed.slice(start, start + PAGE_SIZE);
+
+            document.getElementById('tableBody').innerHTML = pageData.map(function(entry) {
+                return '<tr>' +
+                    '<td style="color:var(--text-muted);font-weight:600">' + (entry._idx + 1) + '</td>' +
+                    '<td style="font-family:monospace;font-size:0.82rem">' + escapeHtml(entry.aadhar) + '</td>' +
+                    '<td style="font-weight:500;color:var(--text)">' + escapeHtml(entry.name) + '</td>' +
+                    '<td style="font-family:monospace;font-size:0.82rem">' + escapeHtml(entry.mobile) + '</td>' +
+                    '<td class="actions-cell">' +
+                        '<button class="btn btn-sm btn-edit" onclick="openEdit(' + entry._idx + ')">Edit</button>' +
+                        '<button class="btn btn-sm btn-delete" onclick="deleteEntry(' + entry._idx + ')">Del</button>' +
+                    '</td></tr>';
+            }).join('');
+
+            document.getElementById('cardView').innerHTML = pageData.map(function(entry) {
+                return '<div class="entry-card">' +
+                    '<div class="serial">' + (entry._idx + 1) + '</div>' +
+                    '<div class="field"><div class="field-label">Name</div><div class="field-value name">' + escapeHtml(entry.name) + '</div></div>' +
+                    '<div class="field"><div class="field-label">Aadhar</div><div class="field-value" style="font-family:monospace">' + formatAadhar(entry.aadhar) + '</div></div>' +
+                    '<div class="field"><div class="field-label">Mobile</div><div class="field-value" style="font-family:monospace">' + formatMobile(entry.mobile) + '</div></div>' +
+                    '<div class="card-actions">' +
+                        '<button class="btn btn-sm btn-edit" onclick="openEdit(' + entry._idx + ')">Edit</button>' +
+                        '<button class="btn btn-sm btn-delete" onclick="deleteEntry(' + entry._idx + ')">Delete</button>' +
+                    '</div></div>';
+            }).join('');
+
+            var pagEl = document.getElementById('pagination');
+            if (totalPages <= 1) { pagEl.innerHTML = ''; return; }
+            var html = '<button ' + (currentPage === 1 ? 'disabled' : '') + ' onclick="goPage(' + (currentPage - 1) + ')">&laquo;</button>';
+            for (var i = 1; i <= totalPages; i++) {
+                if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+                    if (i === 3 || i === totalPages - 2) html += '<button disabled>&#8230;</button>';
+                    continue;
+                }
+                html += '<button class="' + (i === currentPage ? 'active' : '') + '" onclick="goPage(' + i + ')">' + i + '</button>';
+            }
+            html += '<button ' + (currentPage === totalPages ? 'disabled' : '') + ' onclick="goPage(' + (currentPage + 1) + ')">&raquo;</button>';
+            pagEl.innerHTML = html;
+        }
+
+        function goPage(p) { currentPage = p; renderTable(); }
+
+        function escapeHtml(str) {
+            var d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatAadhar(str) {
+            return str.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+
+        function formatMobile(str) {
+            return str.replace(/(\d{5})(\d{5})/, '$1 $2');
+        }
+
+        // Add Entry
+        document.getElementById('entryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var a = document.getElementById('aadhar');
+            var n = document.getElementById('name');
+            var m = document.getElementById('mobile');
+            var valid = true;
+
+            clearError(a, document.getElementById('aadharError'));
+            clearError(a, document.getElementById('aadharDupError'));
+            clearError(n, document.getElementById('nameError'));
+            clearError(m, document.getElementById('mobileError'));
+            clearError(m, document.getElementById('mobileDupError'));
+
+            if (!validateAadhar(a.value)) { showError(a, document.getElementById('aadharError')); valid = false; }
+            else if (isDuplicate('aadhar', a.value.trim(), -1)) { showError(a, document.getElementById('aadharDupError')); valid = false; }
+
+            if (!validateName(n.value)) { showError(n, document.getElementById('nameError')); valid = false; }
+
+            if (!validateMobile(m.value)) { showError(m, document.getElementById('mobileError')); valid = false; }
+            else if (isDuplicate('mobile', m.value.trim(), -1)) { showError(m, document.getElementById('mobileDupError')); valid = false; }
+
+            if (!valid) return;
+
+            var data = getData();
+            data.push({ aadhar: a.value.trim(), name: n.value.trim(), mobile: m.value.trim() });
+            saveData(data);
+            a.value = ''; n.value = ''; m.value = '';
+            a.focus();
+            showToast('Entry added', 'success');
+            currentPage = Math.ceil(data.length / PAGE_SIZE);
+            renderTable();
+        });
+
+        // Edit
+        function openEdit(index) {
+            var data = getData();
+            var entry = data[index];
+            document.getElementById('editModalIndex').value = index;
+            document.getElementById('editAadhar').value = entry.aadhar;
+            document.getElementById('editName').value = entry.name;
+            document.getElementById('editMobile').value = entry.mobile;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var a = document.getElementById('editAadhar');
+            var n = document.getElementById('editName');
+            var m = document.getElementById('editMobile');
+            var idx = parseInt(document.getElementById('editModalIndex').value);
+            var valid = true;
+
+            clearError(a, document.getElementById('editAadharError'));
+            clearError(a, document.getElementById('editAadharDupError'));
+            clearError(n, document.getElementById('editNameError'));
+            clearError(m, document.getElementById('editMobileError'));
+            clearError(m, document.getElementById('editMobileDupError'));
+
+            if (!validateAadhar(a.value)) { showError(a, document.getElementById('editAadharError')); valid = false; }
+            else if (isDuplicate('aadhar', a.value.trim(), idx)) { showError(a, document.getElementById('editAadharDupError')); valid = false; }
+
+            if (!validateName(n.value)) { showError(n, document.getElementById('editNameError')); valid = false; }
+
+            if (!validateMobile(m.value)) { showError(m, document.getElementById('editMobileError')); valid = false; }
+            else if (isDuplicate('mobile', m.value.trim(), idx)) { showError(m, document.getElementById('editMobileDupError')); valid = false; }
+
+            if (!valid) return;
+
+            var data = getData();
+            data[idx] = { aadhar: a.value.trim(), name: n.value.trim(), mobile: m.value.trim() };
+            saveData(data);
+            closeModal('editModal');
+            showToast('Entry updated', 'success');
+            renderTable();
+        });
+
+        // Delete with Undo
+        function deleteEntry(index) {
+            var data = getData();
+            deletedEntry = data[index];
+            deletedIndex = index;
+            data.splice(index, 1);
+            saveData(data);
+            renderTable();
+            if (undoTimeout) clearTimeout(undoTimeout);
+            showToast('Entry deleted', 'undo', undoDelete);
+            undoTimeout = setTimeout(function() { deletedEntry = null; deletedIndex = null; }, 5000);
+        }
+
+        function undoDelete() {
+            if (!deletedEntry) return;
+            var data = getData();
+            data.splice(deletedIndex, 0, deletedEntry);
+            saveData(data);
+            deletedEntry = null;
+            deletedIndex = null;
+            showToast('Entry restored', 'success');
+            renderTable();
+        }
+
+        // Clear All
+        function confirmClearAll() {
+            var data = getData();
+            if (data.length === 0) return;
+            document.getElementById('clearCount').textContent = data.length;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function clearAll() {
+            localStorage.removeItem(STORAGE_KEY);
+            closeModal('confirmModal');
+            showToast('All data cleared', 'error');
+            renderTable();
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // Template config (set these when you have your template text)
+        var TEMPLATE_ORG = '';     // e.g. 'My Organization Name'
+        var TEMPLATE_TEXT = '';    // e.g. 'Address line or subtitle'
+
+        function hasTemplate() { return TEMPLATE_ORG || TEMPLATE_TEXT; }
+
+        // PDF
+        function exportPDF() {
+            var data = getData();
+            if (data.length === 0) { showToast('No data to export', 'warning'); return; }
+
+            var jsPDF = window.jspdf.jsPDF;
+            var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+            var startY = 12;
+
+            if (hasTemplate()) {
+                if (TEMPLATE_ORG) {
+                    doc.setFontSize(18);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(TEMPLATE_ORG, 148, startY + 3, { align: 'center' });
+                    startY += 9;
+                }
+                if (TEMPLATE_TEXT) {
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(TEMPLATE_TEXT, 148, startY + 1, { align: 'center' });
+                    startY += 7;
+                }
+                doc.setFontSize(8);
+                doc.text('Generated: ' + new Date().toLocaleDateString('en-IN') + '  |  Total Entries: ' + data.length, 148, startY + 1, { align: 'center' });
+                startY += 5;
+                doc.setDrawColor(99, 102, 241);
+                doc.setLineWidth(0.5);
+                doc.line(20, startY, 277, startY);
+                startY += 4;
+            } else {
+                doc.setFontSize(8);
+                doc.text('Generated: ' + new Date().toLocaleDateString('en-IN') + '  |  Total Entries: ' + data.length, 148, startY + 2, { align: 'center' });
+                startY += 8;
+            }
+
+            var tableData = data.map(function(entry, i) { return [i + 1, entry.aadhar, entry.name, entry.mobile]; });
+
+            doc.autoTable({
+                startY: startY,
+                head: [['S.No', 'Aadhar Card Number', 'Name', 'Mobile Number']],
+                body: tableData,
+                styles: { fontSize: 10, cellPadding: 4 },
+                headStyles: { fillColor: [99, 102, 241], fontStyle: 'bold' },
+                columnStyles: {
+                    0: { cellWidth: 20, halign: 'center' },
+                    1: { cellWidth: 50 },
+                    2: { cellWidth: 120 },
+                    3: { cellWidth: 40 }
+                },
+                margin: { left: 20, right: 20 },
+                didDrawPage: function() {
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text('Page ' + doc.internal.getNumberOfPages(), 280, 200, { align: 'right' });
+                    doc.setTextColor(0);
+                }
+            });
+
+            doc.save('data-entries.pdf');
+            showToast('PDF exported', 'success');
+        }
+
+        // Numeric only
+        ['aadhar', 'mobile', 'editAadhar', 'editMobile'].forEach(function(id) {
+            document.getElementById(id).addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        });
+
+        // Clear validation on input
+        document.getElementById('aadhar').addEventListener('input', function() {
+            clearError(this, document.getElementById('aadharError'));
+            clearError(this, document.getElementById('aadharDupError'));
+        });
+        document.getElementById('name').addEventListener('input', function() {
+            clearError(this, document.getElementById('nameError'));
+        });
+        document.getElementById('mobile').addEventListener('input', function() {
+            clearError(this, document.getElementById('mobileError'));
+            clearError(this, document.getElementById('mobileDupError'));
+        });
+
+        // Show print header only if template is configured
+        if (hasTemplate()) {
+            var ph = document.getElementById('printHeader');
+            ph.style.display = '';
+            if (TEMPLATE_ORG) document.getElementById('printOrgName').textContent = TEMPLATE_ORG;
+            if (TEMPLATE_TEXT) document.getElementById('printTemplate').textContent = TEMPLATE_TEXT;
+        }
+
+        document.querySelectorAll('.print-date').forEach(function(el) {
+            el.textContent = new Date().toLocaleDateString('en-IN');
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('active');
+            });
+        });
+
+        renderTable();
+    </script>
+</body>
+</html>
